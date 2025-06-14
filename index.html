@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QUEST NOTEPAD</title>
+
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    /* Splash Screen */
+    #splash {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+	  animation: fadeOut 2s ease-out 2s forwards;
+    }
+
+    #splash h1 {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 3em;
+      background: linear-gradient(90deg, #ff0080, #7928ca, #2af598);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: zoomIn 1.5s ease-out;
+      letter-spacing: 2px;
+    }
+
+    @keyframes zoomIn {
+      from {
+        opacity: 0;
+        transform: scale(0.6);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #000000;
+      --header-bg: #4a90e2;
+      --input-bg: #ffffff;
+      --button-bg: #4a90e2;
+      --button-text: #ffffff;
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --header-bg: #1f1f1f;
+      --input-bg: #1e1e1e;
+      --button-bg: #333333;
+      --button-text: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--header-bg);
+      color: var(--text-color);
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5em;
+    }
+
+    nav {
+      display: flex;
+      gap: 10px;
+    }
+
+    nav button,
+    #themeToggle {
+      background-color: var(--button-bg);
+      color: var(--button-text);
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .container {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      padding: 20px;
+      height: calc(100% - 70px);
+    }
+
+    .container.active {
+      display: flex;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    input {
+      font-size: 16px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+    }
+
+    textarea {
+      flex: 1;
+      font-size: 17px;
+      padding: 14px;
+      line-height: 1.6;
+      border: none;
+      background: transparent;
+      outline: none;
+      resize: none;
+      margin-bottom: 20px;
+      color: var(--text-color);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .action-buttons button {
+      flex: 1;
+      background-color: var(--button-bg);
+      color: var(--button-text);
+      border: none;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .note-card {
+      background: var(--input-bg);
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .note-card h3 {
+      margin: 0 0 10px 0;
+    }
+
+    .note-card button {
+      background-color: var(--button-bg);
+      color: var(--button-text);
+      border: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Splash Animation -->
+  <div id="splash">
+    <h1>QUEST NOTEPAD</h1>
+  </div>
+
+  <!-- Main App -->
+  <header>
+    <h1>📝 QUEST Notepad</h1>
+    <nav>
+      <button onclick="showPage('editor')">New Note</button>
+      <button onclick="showPage('saved')">Saved Notes</button>
+      <button id="themeToggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+    </nav>
+  </header>
+
+  <div class="container active" id="editor-page">
+    <label for="filename">FILE TITLE</label>
+    <input id="filename" placeholder="Enter a file title..." />
+
+    <label for="note">Note Content</label>
+    <textarea id="note" placeholder="Start typing your note here..."></textarea>
+
+    <div class="action-buttons">
+      <button onclick="saveNote()" id="saveBtn">💾 Save</button>
+      <button onclick="enableEditing()" id="editBtn" disabled>✏️ Edit</button>
+      <button onclick="exportNote()">📄 Export .TXT</button>
+      <button onclick="exportToPDF()">📕 Export PDF</button>
+    </div>
+  </div>
+
+  <div class="container" id="saved-page">
+    <div id="noteList"></div>
+  </div>
+
+  <script>
+    const filenameInput = document.getElementById('filename');
+    const noteTextarea = document.getElementById('note');
+    const noteListDiv = document.getElementById('noteList');
+    const editorPage = document.getElementById('editor-page');
+    const savedPage = document.getElementById('saved-page');
+    const saveBtn = document.getElementById('saveBtn');
+    const editBtn = document.getElementById('editBtn');
+
+    function showPage(page) {
+      editorPage.classList.remove('active');
+      savedPage.classList.remove('active');
+      if (page === 'editor') {
+        editorPage.classList.add('active');
+      } else {
+        savedPage.classList.add('active');
+        loadNotes();
+      }
+    }
+
+    function saveNote() {
+      const filename = filenameInput.value.trim();
+      const content = noteTextarea.value;
+
+      if (!filename) {
+        alert("Please enter a file title.");
+        return;
+      }
+
+      localStorage.setItem('note_' + filename, content);
+      alert("Note saved!");
+
+      noteTextarea.setAttribute('readonly', true);
+      filenameInput.setAttribute('readonly', true);
+      editBtn.disabled = false;
+      saveBtn.disabled = true;
+    }
+
+    function enableEditing() {
+      noteTextarea.removeAttribute('readonly');
+      filenameInput.removeAttribute('readonly');
+      editBtn.disabled = true;
+      saveBtn.disabled = false;
+    }
+
+    function loadNotes() {
+      noteListDiv.innerHTML = '';
+      const keys = Object.keys(localStorage).filter(key => key.startsWith('note_'));
+      if (keys.length === 0) {
+        noteListDiv.innerHTML = "<p>No saved notes found.</p>";
+        return;
+      }
+
+      keys.forEach(key => {
+        const name = key.replace('note_', '');
+        const content = localStorage.getItem(key);
+
+        const card = document.createElement('div');
+        card.className = 'note-card';
+        card.innerHTML = `
+          <h3>${name}</h3>
+          <p>${content.substring(0, 100)}...</p>
+          <button onclick="loadNote('${name}')">📝 Load</button>
+        `;
+        noteListDiv.appendChild(card);
+      });
+    }
+
+    function loadNote(name) {
+      const content = localStorage.getItem('note_' + name);
+      filenameInput.value = name;
+      noteTextarea.value = content;
+
+      filenameInput.setAttribute('readonly', true);
+      noteTextarea.setAttribute('readonly', true);
+      editBtn.disabled = false;
+      saveBtn.disabled = true;
+
+      showPage('editor');
+    }
+
+    function exportNote() {
+      const filename = filenameInput.value.trim();
+      const content = noteTextarea.value;
+
+      if (!filename) {
+        alert("Please enter a FILE TITLE before exporting.");
+        return;
+      }
+
+      const blob = new Blob([content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = filename + ".txt";
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function exportToPDF() {
+      const filename = filenameInput.value.trim();
+      const content = noteTextarea.value;
+
+      if (!filename) {
+        alert("Please enter a FILE TITLE before exporting.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const margin = 10;
+      const pageHeight = doc.internal.pageSize.height;
+      const lines = doc.splitTextToSize(content, 180);
+      let y = margin;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      doc.text(filename, margin, y);
+      y += 10;
+
+      lines.forEach(line => {
+        if (y + 10 > pageHeight) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(line, margin, y);
+        y += 8;
+      });
+
+      doc.save(`${filename}.pdf`);
+    }
+
+    function toggleTheme() {
+      if (document.body.classList.contains("dark")) {
+        enableLightMode();
+      } else {
+        enableDarkMode();
+      }
+    }
+
+    function enableDarkMode() {
+      document.body.classList.add("dark");
+      document.getElementById("themeToggle").textContent = "☀️ Light Mode";
+      localStorage.setItem("theme", "dark");
+    }
+
+    function enableLightMode() {
+      document.body.classList.remove("dark");
+      document.getElementById("themeToggle").textContent = "🌙 Dark Mode";
+      localStorage.setItem("theme", "light");
+    }
+
+    window.onload = () => {
+      const savedTheme = localStorage.getItem("theme") || "light";
+      if (savedTheme === "dark") enableDarkMode();
+      else enableLightMode();
+      showPage('editor');
+    };
+  </script>
+</body>
+</html>
